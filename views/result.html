@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>ACM Recruitments</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!-- Compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+    <!-- Compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div>
+    <nav>
+    <div class="nav-wrapper">
+      <a href="#" class="brand-logo left" style="margin-left:30px;">Checking portal</a>
+      <button class="right btn waves-effect waves-light" style="margin-right:30px;margin-top:10px" id="logout">Logout</button>
+    </div>
+    </nav> 
+    <div class="container" id="available-attempts">
+        <div class="row">
+        <div class="input-field col s3 l2 m3">
+            <select id="dept">
+                <option value="technical">Technical</option>
+                <option value="management">Management</option>
+                <option value="design">Design</option>
+            </select>
+        </div>
+        <button class="btn waves-effect waves-light col s5 l2 m3" style="margin-top:10px;" id="findDept">Find Department</button>
+        <div class="input-field col s3 l1 m1">
+        <select id="page-number"></select>
+        </div>
+        <button class="btn waves-effect waves-light col s5 l2 m3" style="margin-top:10px;" id="find">Page Number</button>
+        </div>
+    </div>
+    <div class="container">
+        <div class="collection" id="stats"></div>
+        <div id="attempts" class="collection"></div>
+    </div>
+    </div>
+</div>
+<script>
+function takeEvaluation(id){
+    $.ajax({
+        type:"POST",
+        url:"/api/eval/openevaluation",
+        data: {quiz_id:id},
+        success:function(data){
+            if(data.success==false){
+                if(data.message=="Error"){
+                    alert('Error. Try logging in again')
+                } else{
+                    alert(data.message);
+                }                
+            } else{
+                window.location.href="/eval";
+            }
+        },
+        error:function(jqXHR, textStatus, err){
+
+        }
+    });
+}
+function showDetails(name){
+    $.ajax({
+            type:"POST",
+            url:"/api/eval/details",
+            data:{dept:name},
+            success:function(data){
+                console.log(data);
+                
+                if(data.success==false){
+                    alert(data.message)
+                } else{
+                    var myNode=document.getElementById('stats');
+                    while (myNode.firstChild) {
+                        myNode.removeChild(myNode.firstChild);
+                    }
+                    for(var i=0; i<data.result.length; i++) {
+                    $('#stats').append(`
+                        <div class="collection-item">${data.result[i]}</div>`)
+                    }
+                }
+            },
+            error:function(jqXHR, textStatus, err){
+
+            }
+        });
+}
+function changeDisplay(attempts){
+     var myNode=document.getElementById('attempts');
+    while (myNode.firstChild) {
+        myNode.removeChild(myNode.firstChild);
+    }
+    for(var i=0; i<attempts.length; i++) {
+    $('#attempts').append(`
+        <div class="collection-item">
+                <div class="">${attempts[i].taker.name}</div>
+                <div>${attempts[i].taker.regno}</div>
+                <div>${attempts[i].taker.phone}</div>
+                <div>${attempts[i].taker.email}</div>
+            <button id="select" onClick="takeEvaluation('${attempts[i].id}');return false;">Take evaluation</button>
+        </div>`)
+    }
+}
+$(document).ready(function(){
+    // showDetails('technical')
+    $('select').formSelect();
+    $('#page-number').on('contentChanged', function() {
+        $(this).formSelect();
+    });
+    $('#find').on('click',function(){
+        $.ajax({
+            type:"POST",
+            url:"/api/eval/resultattempts",
+            data:{num:document.getElementById('page-number').selectedIndex+1,dept:document.getElementById('dept').value},
+            success:function(data){
+                console.log(data);
+                
+                if(data.success==false){
+                    alert('Error. Try logging in again')
+                } else{
+                    changeDisplay(data.attempts);
+                }
+            },
+            error:function(jqXHR, textStatus, err){
+
+            }
+        });
+    })
+    $.ajax({
+        type:"POST",
+        url:"/api/eval/resultdashboard",
+        data:{dept:'technical'},
+        success:function(data){
+            if(data.success==false){
+                alert('Error. Try logging in again')
+            } else{
+                $("#page-number").empty().html(' ');
+                
+                for(i=1;i<=(data.number/10)+1;i++){
+                    $("#page-number").append(
+                        $("<option>").attr("value",i).text(i)
+                    );
+                }
+                $("#page-number").trigger('contentChanged');
+                $.ajax({
+                    type:"POST",
+                    url:"/api/eval/resultattempts",
+                    data:{num:1,dept:'technical'},
+                    success:function(data){
+                        if(data.success==false){
+                            alert('Error. Try logging in again')
+                        } else{
+                            changeDisplay(data.attempts);
+                            console.log(data);
+                        }
+                    },
+                    error:function(jqXHR, textStatus, err){
+
+                    }
+                });    
+            }
+        },
+        error:function(jqXHR, textStatus, err){
+
+        }
+    })
+    $('#findDept').on('click',function(){
+        $.ajax({
+        type:"POST",
+        url:"/api/eval/resultdashboard",
+        data:{dept:document.getElementById('dept').value},
+        success:function(data){
+            if(data.success==false){
+                alert('Error. Try logging in again')
+            } else{
+                $("#page-number").empty().html(' ');
+                
+                for(i=1;i<=(data.number/10)+1;i++){
+                    $("#page-number").append(
+                        $("<option>").attr("value",i).text(i)
+                    );
+                }
+                $("#page-number").trigger('contentChanged');
+                $.ajax({
+                    type:"POST",
+                    url:"/api/eval/resultattempts",
+                    data:{num:1,dept:document.getElementById('dept').value},
+                    success:function(data){
+                        if(data.success==false){
+                            alert('Error. Try logging in again')
+                        } else{
+            
+                            changeDisplay(data.attempts);
+                            showDetails(document.getElementById('dept').value)
+                            console.log(data);
+                        }
+                    },
+                    error:function(jqXHR, textStatus, err){
+
+                    }
+                });    
+            }
+        },
+        error:function(jqXHR, textStatus, err){
+
+        }
+    })
+    })
+    $('#logout').on('click',function(){
+        $.ajax({
+            type: "POST",
+            url: "/api/eval/logout",
+            success: function(data) {
+                if(data.success==false){
+                    alert('Try logging out again')
+                } else{
+                    window.location.href='/'
+                }
+            },
+            error: function(jqXHR, textStatus, err) {
+                //show error message
+                console.log(err);
+            }
+        });
+    });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Page Title</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!-- Compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+    <!-- Compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+        <nav>
+                <div class="nav-wrapper">
+                  <a href="#" class="brand-logo left" style="margin-left:30px;">Checking portal</a>
+                  <button class="right btn waves-effect waves-light" style="margin-right:30px;margin-top:10px" id="logout">Logout</button>
+                </div>
+        </nav> 
+        <div class="container" id="main-body"></div> 
+<script>
+    function select(id){
+        $.ajax({
+            type: "POST",
+            url: "/api/eval/evaluation",
+            data:{quiz_id:id,selected:true},
+            success: function(data) {
+                if(data.success==false){
+                    alert('Try logging out again')
+                } else{
+                    window.location.href="/dashboard"
+                }
+            },
+            error: function(jqXHR, textStatus, err) {
+                //show error message
+                console.log(err);
+            }
+        });
+    }
+
+    function reject(id){
+        $.ajax({
+            type: "POST",
+            url: "/api/eval/evaluation",
+            data:{quiz_id:id,selected:false},
+            success: function(data) {
+                console.log(data)
+                if(data.success==false){
+                    alert('Try logging out again')
+                } else{
+                    window.location.href="/dashboard"
+                }
+            },
+            error: function(jqXHR, textStatus, err) {
+                //show error message
+                console.log(err);
+            }
+        });
+    }
+    function showQuestions(questions){
+        for(i=0;i<questions.length;i++){
+            if(questions[i].question_id.question_type==1){
+                $('#questions').append(`<div class="collection-item">
+                <div><b>Question</b></div><br>
+                <div class="question">${questions[i].question_id.question}</div>
+                <div><b>Answer</b></div><br>
+                <div class="answer">${questions[i].answer}</div>    
+                </div>`)
+            } else if(questions[i].question_id.question_type==0){
+                $('#questions').append(`<div class="collection-item">
+                <div><b>Question</b></div><br>
+                <div class="question">${questions[i].question_id.question}</div>
+                <div id="options">${JSON.stringify(questions[i].question_id.options)}</div>
+                <div><b>Answer</b></div><br>
+                <div class="options">${questions[i].mcq_answer}</div>    
+                </div>`)
+                
+            }
+            
+        }
+    }
+    function getInfo(id){
+        $.ajax({
+            type: "POST",
+            url: "/api/eval/userinfo",
+            data:{user_id:id},
+            success: function(data) {
+                console.log(data)
+                if(data.success==false){
+                    alert(data.message);
+                } else{
+                    $('#rec-info').append(`
+                        <div>${data.result.name}</div>
+                        <div>${data.result.email}</div>
+                        <div>${data.result.regno}</div>
+                        <div>${data.result.phone}</div>
+                    `)
+                    console.log(data);
+                }
+            },
+            error: function(jqXHR, textStatus, err) {
+                //show error message
+                console.log(err);
+            }
+        });
+    }
+$(document).ready(function(){
+    $.ajax({
+            type: "GET",
+            url: "/api/eval/evaluation",
+            success: function(data) {
+                if(data.success==false){
+                    alert('Try logging out again')
+                } else{
+                    $('#main-body').append(`
+                    <button class="btn waves-effect waves-light" id="info" onclick="getInfo('${data.attempts.taker}');return false;">Get recruitee info</button>
+                    <div id="rec-info"></div>
+                    <div class="collection" id="questions"></div>
+                    <div><button class="btn waves-effect waves-light" onclick="select('${data.attempts._id}');return false">Select</button><button class="btn waves-effect waves-light" id="reject" onClick="reject('${data.attempts._id}');return false">Reject</button></div>            
+                    `)
+                    showQuestions(data.attempts.questions);
+                    console.log(data)
+                }
+            },
+            error: function(jqXHR, textStatus, err) {
+                //show error message
+                console.log(err);
+            }
+        });
+    $('#logout').on('click',function(){
+        $.ajax({
+            type: "POST",
+            url: "/api/eval/logout",
+            success: function(data) {
+                if(data.success==false){
+                    alert('Try logging out again')
+                } else{
+                    window.location.href='/'
+                }
+            },
+            error: function(jqXHR, textStatus, err) {
+                //show error message
+                console.log(err);
+            }
+        });
+    });
+});
+</script>    
+</body>
+</html> 

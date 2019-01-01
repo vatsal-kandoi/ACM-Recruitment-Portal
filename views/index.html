@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Page Title</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!-- Compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+    <!-- Compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <div>
+        <div class="container">
+            <div class="row">
+            <div id="log" class="col s8 m6 l4">
+            <form class="" style="margin:auto;" id="login-form">
+                <input type="text" class="col s12 input-field" placeholder="Enter login name..." id="login-name">
+                <input type="password" class="col s12 input-field" placeholder="Enter login password ..." id="login-password">
+                <input class="btn col s12 cyan" type="submit" value="Login">
+                <div id="error-message"></div>
+            </form>
+            <br>
+            <div class="" id="signup">Signup?</div>
+            </div>
+            
+            <div id="sign" style="display: none" class="col s8 m6 l4">
+                <form class="" id="signup-form">
+                    <input type="text" class="col s12 input-field" placeholder="Name.." id="signup-name">
+                    <input type="text" class="col s12 input-field" placeholder="Secret.." id="secret">
+                    <input type="password" class="col s12 input-field" placeholder="Password.." id="signup-password">
+                    <input class="btn col s12 cyan" type="submit">
+                    <span id="error-message-signup"></span>
+                </form>
+                <div id="login">Login?</div>
+            </div>
+        </div>
+        </div>
+    </div>
+<script>
+$(document).ready(function(){
+    $('#signup').on('click',function(){
+        $('#log').css('display','none');
+        $('#sign').css('display','block')
+    });
+    $('#login').on('click',function(){
+        $('#log').css('display','block');
+        $('#sign').css('display','none')
+    })
+    $('#login-form').on('submit',function(e){
+        e.preventDefault();
+        $.ajax({
+            type: "POST",
+            url: "/api/eval/login",
+            data: { name:$('#login-name').val(),password:$('#login-password').val() },
+            success: function(data) {
+                if(data.success==false){
+                    $('#error-message').html('Please check name and password')
+                } else{
+                    if(data.info.evaluating==null){
+                        window.location.href='/result';
+                    } else{
+                        window.location.href='/eval';
+                    }                    
+                }
+            },
+            error: function(jqXHR, textStatus, err) {
+                //show error message
+                console.log(err);
+            }
+        });
+    })
+    $('#signup-form').on('submit',function(e){
+        e.preventDefault();
+        $.ajax({
+            type: "POST",
+            url: "/api/eval/signup",
+            data: { name:$('#signup-name').val(),secret:$('#secret').val(),password:$('#signup-password').val() },
+            success: function(data) {
+                if(data.success==false){
+                    alert(data.message);
+                } else{
+                    window.location.href='/result';
+                                       
+                }
+            },
+            error: function(jqXHR, textStatus, err) {
+                //show error message
+                console.log(err);
+            }
+        });
+    })
+})         
+</script>
+</body>
+</html>
